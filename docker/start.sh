@@ -33,6 +33,15 @@ EOF
     echo ".env file created successfully"
 fi
 
+# Read APP_DEBUG from .env file to ensure correct value
+if [ -f .env ]; then
+    APP_DEBUG_VALUE=$(grep "^APP_DEBUG=" .env | cut -d '=' -f2-)
+    if [ ! -z "$APP_DEBUG_VALUE" ]; then
+        export APP_DEBUG="$APP_DEBUG_VALUE"
+        echo "APP_DEBUG set to: $APP_DEBUG"
+    fi
+fi
+
 # Generate application key if not set
 if [ -z "$APP_KEY" ] || ! grep -q "APP_KEY=base64:" .env 2>/dev/null; then
     echo "Generating application key..."
@@ -67,23 +76,43 @@ php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
 
+# Remove old config cache to ensure fresh values
+echo "Removing old config cache..."
+rm -f bootstrap/cache/config.php bootstrap/cache/routes.php bootstrap/cache/services.php
+
+# Enable PHP error display
+echo "Configuring PHP error display..."
+echo "display_errors = On" >> /usr/local/etc/php/conf.d/error.ini
+echo "error_reporting = E_ALL" >> /usr/local/etc/php/conf.d/error.ini
+echo "log_errors = On" >> /usr/local/etc/php/conf.d/error.ini
+echo "error_log = /var/log/php-fpm/error.log" >> /usr/local/etc/php/conf.d/error.ini
+
 # Test database connection
 echo "Testing database connection..."
-php artisan db:show --database=mysql 2>&1 || echo "WARNING: Database connection test failed or db:show command not available"
+php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'Database connection: OK'; } catch(Exception \$e) { echo 'Database connection FAILED: ' . \$e->getMessage(); }" 2>&1 || echo "WARNING: Database connection test failed"
 
-# Cache config for production (skip if DEBUG is true)
+# Cache config for production (skip if DEBUG is true or not production)
 if [ "$APP_ENV" = "production" ] && [ "$APP_DEBUG" != "true" ]; then
     echo "Caching configuration for production..."
     php artisan config:cache
     php artisan route:cache
     php artisan view:cache
 else
-    echo "Skipping config cache (DEBUG mode enabled)"
+    echo "Skipping config cache (DEBUG mode enabled or not production)"
 fi
 
 # Run migrations
 echo "Running migrations..."
 php artisan migrate --force
+
+# Show Laravel log if exists (last 30 lines)
+if [ -f storage/logs/laravel.log ]; then
+    echo "=== Last 30 lines of Laravel log ==="
+    tail -30 storage/logs/laravel.log
+    echo "=== End of Laravel log ==="
+else
+    echo "Laravel log file not found yet"
+fi
 
 # Start PHP-FPM
 php-fpm -D
