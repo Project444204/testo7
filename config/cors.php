@@ -19,7 +19,10 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    // ✅ تحديث allowed_origins لاستخدام environment variable
+    'allowed_origins' => env('CORS_ALLOWED_ORIGINS', '*') === '*' 
+        ? ['*'] 
+        : explode(',', env('CORS_ALLOWED_ORIGINS', '')),
 
     'allowed_origins_patterns' => [],
 
@@ -29,6 +32,7 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    // ✅ تفعيل credentials للـ authentication
+    'supports_credentials' => env('CORS_SUPPORTS_CREDENTIALS', false),
 
 ];
