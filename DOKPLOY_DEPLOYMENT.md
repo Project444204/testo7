@@ -100,6 +100,7 @@ velstore/
 2. **Database**: Use service name `db` (not `localhost`) in `DB_HOST`
 3. **Storage Permissions**: Ensure `storage/` and `bootstrap/cache/` have write permissions
 4. **SSL/HTTPS**: Dokploy handles SSL automatically, ensure `APP_URL` uses `https://`
+5. **Port Configuration**: Port 80 is exposed internally only. Dokploy handles external routing automatically - **DO NOT** configure ports in docker-compose.yml for Dokploy deployments
 
 ## 🔧 Troubleshooting
 
@@ -115,6 +116,11 @@ velstore/
 ### Storage Issues
 - Run: `chmod -R 755 storage bootstrap/cache`
 - Check volume mounts in docker-compose.yml
+
+### Port Already Allocated Error
+- **Solution**: Remove `ports` section from docker-compose.yml (already done)
+- Dokploy handles routing automatically - no need to expose ports manually
+- If you see "port 80 already allocated", ensure ports are commented out or removed
 
 ## 📝 Post-Deployment Checklist
 
