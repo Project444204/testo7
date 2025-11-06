@@ -7,11 +7,11 @@ if [ ! -f .env ]; then
 APP_NAME=${APP_NAME:-Velstore}
 APP_ENV=${APP_ENV:-production}
 APP_KEY=${APP_KEY:-}
-APP_DEBUG=${APP_DEBUG:-false}
+APP_DEBUG=${APP_DEBUG:-true}
 APP_URL=${APP_URL:-http://localhost}
 
 LOG_CHANNEL=${LOG_CHANNEL:-stack}
-LOG_LEVEL=${LOG_LEVEL:-error}
+LOG_LEVEL=${LOG_LEVEL:-debug}
 
 DB_CONNECTION=${DB_CONNECTION:-mysql}
 DB_HOST=${DB_HOST:-db}
@@ -48,20 +48,41 @@ if [ -z "$APP_KEY" ] || ! grep -q "APP_KEY=base64:" .env 2>/dev/null; then
     fi
 fi
 
+# Ensure storage/logs directory exists and has write permissions
+echo "Setting up storage permissions..."
+mkdir -p storage/logs
+chown -R www-data:www-data storage/logs bootstrap/cache
+chmod -R 775 storage/logs bootstrap/cache
+
+# Create PHP-FPM error log directory
+mkdir -p /var/log/php-fpm
+chmod 777 /var/log/php-fpm
+touch /var/log/php-fpm/error.log
+chmod 666 /var/log/php-fpm/error.log
+
 # Clear and cache config
+echo "Clearing caches..."
 php artisan config:clear
 php artisan cache:clear
 php artisan route:clear
 php artisan view:clear
 
-# Cache config for production
-if [ "$APP_ENV" = "production" ]; then
+# Test database connection
+echo "Testing database connection..."
+php artisan db:show --database=mysql 2>&1 || echo "WARNING: Database connection test failed or db:show command not available"
+
+# Cache config for production (skip if DEBUG is true)
+if [ "$APP_ENV" = "production" ] && [ "$APP_DEBUG" != "true" ]; then
+    echo "Caching configuration for production..."
     php artisan config:cache
     php artisan route:cache
     php artisan view:cache
+else
+    echo "Skipping config cache (DEBUG mode enabled)"
 fi
 
 # Run migrations
+echo "Running migrations..."
 php artisan migrate --force
 
 # Start PHP-FPM
