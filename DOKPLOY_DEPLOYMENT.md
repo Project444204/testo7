@@ -48,39 +48,35 @@ MAIL_FROM_NAME="${APP_NAME}"
 VITE_APP_NAME="${APP_NAME}"
 ```
 
-## 🚀 Deployment Steps
+## 🚀 Deployment Steps (سهل جداً!)
 
-### 1. Create Project in Dokploy
-- Project Type: **Docker Compose**
-- Project Name: `velstore`
+### 1. في Dokploy Dashboard:
+- أنشئ Project جديد
+- اختر نوع: **Docker Compose**
+- أدخل رابط الـ Repository
+- Dokploy سيقوم بكل شيء تلقائياً!
 
-### 2. Setup Database Service
-- Create MySQL database in Dokploy
-- Service name: `db`
-- Add database credentials to environment variables
+### 2. إضافة Environment Variables (اختياري):
+- إذا أردت تغيير الإعدادات الافتراضية، أضف المتغيرات من القائمة أعلاه
+- **الأهم**: `APP_URL` - ضع النطاق الفعلي
+- **الأهم**: `CORS_ALLOWED_ORIGINS` - ضع النطاق الفعلي
 
-### 3. Configure Environment Variables
-- Copy all variables from above
-- Replace `your-domain.dokploy.app` with your actual domain
-- Generate `APP_KEY` using: `php artisan key:generate`
+### 3. إعدادات تلقائية:
+- ✅ Database يتم إنشاؤه تلقائياً
+- ✅ Migrations يتم تشغيلها تلقائياً عند البدء
+- ✅ APP_KEY يتم توليده تلقائياً إذا لم يكن موجوداً
+- ✅ SSL يتم إعداده تلقائياً من Dokploy
 
-### 4. Setup Domain
-- Add your domain in Dokploy
-- SSL will be configured automatically
-
-### 5. First Time Setup (After Deployment)
-
-Connect to your container and run:
+### 4. بعد النشر الأول (اختياري):
+إذا أردت إضافة بيانات تجريبية:
 
 ```bash
 php artisan install:velstore --with-import
 ```
 
-Or manually:
+أو يدوياً:
 
 ```bash
-php artisan key:generate
-php artisan migrate
 php artisan db:seed
 ```
 

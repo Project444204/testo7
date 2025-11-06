@@ -14,7 +14,8 @@ RUN apk add --no-cache \
     nginx \
     mysql-client \
     nodejs \
-    npm
+    npm \
+    bash
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
